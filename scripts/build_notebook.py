@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Generate the structured Assignment 3 Jupyter notebook with polished markdown."""
+"""Build the main Assignment 3 notebook with first-person documentation."""
 import json
 import sys
 from pathlib import Path
@@ -7,7 +7,7 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT))
 
-from docs.notebook_markdown import INTRO, SECTIONS  # noqa: E402
+from docs.assignment_steps_markdown import COMPARISON, STEP1, STEP2, STEP3, STEP4  # noqa: E402
 
 NOTEBOOK_PATH = ROOT / "notebooks" / "assignment3_nlp_transformers.ipynb"
 
@@ -26,9 +26,34 @@ def code(text: str) -> dict:
     }
 
 
+INTRO = """
+# Assignment 3 — NLP with Transformers (Project Gutenberg)
+
+**Student:** Naimur Rahman Jayed · **Course:** Deep Learning Minor · **Institution:** Inholland
+
+---
+
+## How to read this notebook
+
+I structured this notebook exactly like the assignment brief:
+
+| Step | Topic |
+|------|--------|
+| **1** | Data preparation & embeddings |
+| **2** | Conv1D and LSTM multi-label classification |
+| **3** | DistilBERT (pretrained Transformer) classification |
+| **4** | Category-conditioned text generation |
+
+Each step has **markdown explanations** (what / how / why) and **code cells** you can run in order. Figures and metrics are saved under `outputs/`.
+"""
+
+
 def build():
-    cells = [md(INTRO), code(
-        """import sys
+    cells = [
+        md(INTRO),
+        code(
+            """# Environment setup
+import sys
 from pathlib import Path
 ROOT = Path.cwd().resolve()
 if not (ROOT / "src").exists():
@@ -38,121 +63,90 @@ sys.path.insert(0, str(ROOT))
 import warnings
 warnings.filterwarnings("ignore")
 
+import json
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 import seaborn as sns
-import tensorflow as tf
-
-from src.config import *
-from src.data_loading import load_raw_catalog, prepare_classification_dataset
-from src.preprocessing import preprocess_dataframe
-from src.train import prepare_tensors, train_baseline, train_transformer
-from src.evaluate import evaluate_classifier, save_evaluation, build_comparison_table
-from src.visualization import *
-from src.attention_viz import visualize_sample_attention
-from src.hyperparameter_experiments import run_experiments
 
 %matplotlib inline
 sns.set_theme(style="whitegrid")
-print("TensorFlow:", tf.__version__)
 print("Project root:", ROOT)"""
-    )]
+        ),
+        md(STEP1),
+        code(
+            """from src.data_loading import load_raw_catalog
+from src.multilabel_data import prepare_multilabel_dataset
+from src.preprocessing import preprocess_dataframe
+from src.visualization import plot_class_distribution, plot_text_length_distribution
 
-    for num in range(1, 27):
-        if num in SECTIONS:
-            cells.append(md(SECTIONS[num]))
-
-    # Code blocks keyed to sections
-    cells.append(code(
-        """raw_df = load_raw_catalog()
-print("Raw catalog shape:", raw_df.shape)
+raw_df = load_raw_catalog()
+print("Full catalog shape:", raw_df.shape)
 display(raw_df.head())
-print("\\nMissing values:")
-display(raw_df.isnull().sum())"""
-    ))
 
-    cells.append(code(
-        """df = prepare_classification_dataset(raw_df)
-df = preprocess_dataframe(df)
-print("Working set shape:", df.shape)
-print("Number of classes:", df["category"].nunique())
-display(df[["Title", "Authors", "Subjects", "category", "text_clean"]].head())
+df, class_names = prepare_multilabel_dataset(raw_df)
+df = preprocess_dataframe(df, text_col="text")
+df["num_labels"] = df["label_list"].apply(len)
+print("Working set:", df.shape)
+print("Label categories:", len(class_names))
+display(df[["Title", "label_list", "text_clean", "num_labels"]].head())
 
+# Primary tag for EDA plot
+df["category"] = df["label_list"].str[0]
 plot_class_distribution(df)
-plot_text_length_distribution(df)
-tokens = []
-for t in df["text_clean"].head(3000):
-    tokens.extend(t.split())
-plot_word_frequency(tokens)"""
-    ))
+plot_text_length_distribution(df, col="text")"""
+        ),
+        md(STEP2),
+        code(
+            """from src.multilabel_train import prepare_multilabel_tensors, train_conv1d, train_lstm
+import pandas as pd
 
-    cells.append(code(
-        """splits, vectorizer, meta = prepare_tensors(df)
-X_train, X_val, X_test, y_train, y_val, y_test = splits
-print("Train:", X_train.shape, "| Val:", X_val.shape, "| Test:", X_test.shape)
-print("Vocabulary size:", meta["vocab_size"], "| Classes:", meta["num_classes"])"""
-    ))
+splits, vectorizer, meta = prepare_multilabel_tensors(df)
+conv_model, conv_hist, conv_res = train_conv1d(splits, meta, epochs=4)
+lstm_model, lstm_hist, lstm_res = train_lstm(splits, meta, epochs=4)
 
-    cells.append(code(
-        """baseline_model, baseline_hist, baseline_result, baseline_test, _ = train_baseline(
-    splits, vectorizer, meta
-)
-plot_training_history(baseline_hist, "baseline")
-baseline_metrics, baseline_pred, _ = evaluate_classifier(
-    baseline_model, *baseline_test, meta["class_names"]
-)
-save_evaluation("baseline", baseline_metrics)
-plot_confusion_matrix(baseline_test[1], baseline_pred, meta["class_names"], "baseline")
-baseline_result"""
-    ))
+rows = []
+for name, res in [("Conv1D", conv_res), ("BiLSTM", lstm_res)]:
+    m = res["test_metrics"]
+    rows.append({"Model": name, **m, "train_sec": res["train_time_sec"]})
+display(pd.DataFrame(rows))"""
+        ),
+        md(STEP3),
+        code(
+            """# DistilBERT — downloads weights on first run (~250 MB). Allow a few minutes.
+from src.bert_classifier import train_bert
 
-    cells.append(code(
-        """transformer_model, transformer_hist, transformer_result, transformer_test, _ = train_transformer(
-    splits, vectorizer, meta
-)
-plot_training_history(transformer_hist, "transformer")
-transformer_metrics, transformer_pred, _ = evaluate_classifier(
-    transformer_model, *transformer_test, meta["class_names"]
-)
-save_evaluation("transformer", transformer_metrics)
-plot_confusion_matrix(transformer_test[1], transformer_pred, meta["class_names"], "transformer")
-transformer_result"""
-    ))
+# Set epochs=2 in src/config.py for stronger results if you have time
+bert_model, bert_tok, bert_res = train_bert()
+print(json.dumps(bert_res["test_metrics"], indent=2))"""
+        ),
+        md(STEP4),
+        code(
+            """from src.text_generation import train_and_generate
 
-    cells.append(code(
-        """comparison = build_comparison_table([
-    {"Model": "Baseline NN", "Accuracy": baseline_metrics["accuracy"],
-     "F1_macro": baseline_metrics["f1_macro"],
-     "Train_time_sec": baseline_result["train_time_sec"]},
-    {"Model": "Custom Transformer", "Accuracy": transformer_metrics["accuracy"],
-     "F1_macro": transformer_metrics["f1_macro"],
-     "Train_time_sec": transformer_result["train_time_sec"]},
-])
-display(comparison)
+gen_model, gen_result = train_and_generate(category="Category: History - American")
+print("Prompt category:", gen_result["prompt_category"])
+print("Seed:", gen_result["seed"])
+print("\\n--- Generated text ---\\n")
+print(gen_result["generated_text"])"""
+        ),
+        md(COMPARISON),
+        code(
+            """# Load saved metrics for final comparison table
+from pathlib import Path
+import pandas as pd
 
-sample_idx = np.random.choice(len(X_test), 5, replace=False)
-probs = transformer_model.predict(X_test[sample_idx], verbose=0)
-for i, idx in enumerate(sample_idx):
-    pred = meta["class_names"][np.argmax(probs[i])]
-    true = meta["class_names"][y_test[idx]]
-    print(f"True: {true[:55]}")
-    print(f"Pred: {pred[:55]} | Correct: {pred == true}\\n")"""
-    ))
-
-    cells.append(code(
-        """# Attention visualization on one test example
-rev_index = {v: k for k, v in vectorizer.word_index.items()}
-sample_x = X_test[:1]
-token_ids = [rev_index.get(i, "<unk>") for i in sample_x[0] if i != 0][:30]
-visualize_sample_attention(transformer_model, sample_x, token_ids)
-print("Saved attention heatmap to outputs/figures/attention_heatmap.png")"""
-    ))
-
-    cells.append(code(
-        """hp_results = run_experiments(epochs=3)
-pd.DataFrame(hp_results)"""
-    ))
+metrics_dir = ROOT / "outputs" / "metrics"
+rows = []
+for path in sorted(metrics_dir.glob("*multilabel.json")):
+    data = json.loads(path.read_text())
+    row = {"file": path.name, "model": data.get("model"), "train_sec": data.get("train_time_sec")}
+    if "test_metrics" in data:
+        row.update(data["test_metrics"])
+    rows.append(row)
+display(pd.DataFrame(rows))"""
+        ),
+    ]
 
     nb = {
         "nbformat": 4,

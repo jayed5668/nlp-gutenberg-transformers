@@ -1,211 +1,178 @@
-# NLP with Transformers — Project Gutenberg Catalog
+<p align="center">
+  <strong>NLP with Transformers — Project Gutenberg Catalog</strong><br>
+  <sub>Deep Learning Minor · Inholland · Assignment 3</sub>
+</p>
 
-[![Python](https://img.shields.io/badge/Python-3.11+-blue.svg)](https://www.python.org/)
-[![TensorFlow](https://img.shields.io/badge/TensorFlow-2.15+-orange.svg)](https://www.tensorflow.org/)
-[![License](https://img.shields.io/badge/License-Academic-lightgrey.svg)]()
-
-> **Deep Learning Minor · Inholland University of Applied Sciences**  
-> Assignment 3 — Natural Language Processing with Deep Learning and Transformers
-
----
-
-## Table of Contents
-
-1. [Overview](#overview)
-2. [What I Built](#what-i-built)
-3. [Results](#results)
-4. [Project Structure](#project-structure)
-5. [Quick Start](#quick-start)
-6. [Step-by-Step Workflow](#step-by-step-workflow)
-7. [Documentation](#documentation)
-8. [GitHub Setup](#github-setup)
-9. [References](#references)
+<p align="center">
+  <img src="https://img.shields.io/badge/Python-3.11+-3776AB?style=flat-square&logo=python&logoColor=white" alt="Python"/>
+  <img src="https://img.shields.io/badge/TensorFlow-2.15+-FF6F00?style=flat-square&logo=tensorflow" alt="TensorFlow"/>
+  <img src="https://img.shields.io/badge/PyTorch-Transformers-EE4C2C?style=flat-square&logo=pytorch" alt="PyTorch"/>
+  <img src="https://img.shields.io/badge/Task-Multi--label%20NLP-2ea44f?style=flat-square" alt="Task"/>
+</p>
 
 ---
 
-## Overview
+## Hi — this is my Assignment 3 project
 
-In this project I classified **Project Gutenberg bookshelf categories** from book metadata. Each record contains a title, authors, and subjects; my models learn to predict the primary category tag (for example *Category: Novels* or *Category: Biographies*).
+I built an end-to-end NLP pipeline on the [**Project Gutenberg**](https://www.gutenberg.org/) catalog. My goal was to **classify book metadata into bookshelf categories** (multi-label), compare **Conv1D**, **LSTM**, and **DistilBERT**, and finally **generate short text** in a chosen literary style — exactly as required in the official brief.
 
-I compared two approaches:
-
-| Approach | Description |
-|----------|-------------|
-| **Baseline NN** | Embedding layer + global pooling + dense layers |
-| **Custom Transformer** | Encoder with multi-head self-attention and positional encoding |
-
-The full narrative, EDA, and evaluation are in the [Jupyter notebook](notebooks/assignment3_nlp_transformers.ipynb) and the [written report](docs/PROJECT_REPORT.md).
+> **GitHub:** [jayed5668/nlp-gutenberg-transformers](https://github.com/jayed5668/nlp-gutenberg-transformers)  
+> **Main notebook:** [`notebooks/assignment3_nlp_transformers.ipynb`](notebooks/assignment3_nlp_transformers.ipynb)
 
 ---
 
-## What I Built
+## Table of contents
 
-- End-to-end data pipeline (`src/data_loading.py`, `preprocessing.py`)
-- Exploratory analysis with saved figures (`outputs/figures/`)
-- Baseline and Transformer classifiers (`src/baseline_model.py`, `transformer_model.py`)
-- Training with early stopping and checkpoints (`scripts/run_pipeline.py`)
-- Evaluation metrics and confusion matrices (`outputs/metrics/`)
-- Attention heatmap visualization (`src/attention_viz.py`)
-- Hyperparameter comparison experiments (`src/hyperparameter_experiments.py`)
-
----
-
-## Results
-
-| Model | Test accuracy | Macro F1 | Training time |
-|-------|---------------|----------|---------------|
-| Baseline NN | **70.9%** | **0.682** | ~6 s |
-| Custom Transformer | 69.4% | 0.669 | ~6 s |
-
-My baseline performed slightly better on short metadata texts. Confusion matrices and per-class reports are in `outputs/metrics/` and `outputs/figures/`.
+- [Assignment steps I completed](#assignment-steps-i-completed)
+- [My results](#my-results)
+- [Repository layout](#repository-layout)
+- [Quick start](#quick-start)
+- [How I developed this (step commits)](#how-i-developed-this-step-commits)
+- [Documentation](#documentation)
+- [Dataset](#dataset)
+- [References](#references)
 
 ---
 
-## Project Structure
+## Assignment steps I completed
+
+| Step | What I implemented | My code |
+|:----:|-------------------|---------|
+| **1** | Data prep, multi-label tags, text cleaning, embedding choices | `src/multilabel_data.py`, `src/preprocessing.py` |
+| **2** | **Conv1D** + **BiLSTM** multi-label classifiers (Keras) | `src/conv1d_model.py`, `src/lstm_model.py` |
+| **3** | **DistilBERT** fine-tuning (pretrained Transformer) | `src/bert_classifier.py` |
+| **4** | Category-conditioned **text generation** (char-LSTM) | `src/text_generation.py` |
+
+Each step is explained in the notebook with **first-person markdown** (what I did, how, and why), including **IEEE-style references**.
+
+---
+
+## My results
+
+Multi-label classification on a balanced subset of English Gutenberg metadata:
+
+| Model | F1 (micro) | F1 (macro) | Hamming loss |
+|-------|------------|------------|--------------|
+| Conv1D + Dense | 0.41 | 0.27 | 0.11 |
+| **BiLSTM** | **0.57** | **0.48** | **0.09** |
+| DistilBERT (1 epoch, 2k rows) | 0.23 | 0.06 | 0.13 |
+
+On my laptop, the **BiLSTM** was the strongest classical model. DistilBERT needs more epochs/data to show its usual advantage — I document that limitation in the notebook.
+
+Figures: `outputs/figures/` · Metrics: `outputs/metrics/`
+
+---
+
+## Repository layout
 
 ```
 Assignment -3/
-│
-├── README.md                 # You are here
-├── STEPS.md                  # Step-by-step commit log
+├── README.md                          ← project overview (this file)
+├── STEPS.md                           ← Git step checklist
 ├── requirements.txt
 │
-├── data/
-│   ├── raw/pg_catalog.csv    # Original Gutenberg catalog (77k rows)
-│   └── processed/            # Cleaned subset (generated)
-│
 ├── notebooks/
-│   └── assignment3_nlp_transformers.ipynb   # Main submission notebook
+│   └── assignment3_nlp_transformers.ipynb   ← ⭐ main submission
 │
 ├── docs/
-│   ├── PROJECT_REPORT.md     # Full written report (sections 1–26)
-│   └── notebook_markdown.py  # Notebook narrative source
+│   ├── PROJECT_REPORT.md              ← full written report (26 sections)
+│   └── assignment_steps_markdown.py   ← notebook narrative source
 │
-├── src/                      # Reusable Python modules
-│   ├── config.py
-│   ├── data_loading.py
-│   ├── preprocessing.py
-│   ├── baseline_model.py
-│   ├── transformer_model.py
-│   ├── train.py
-│   ├── evaluate.py
-│   ├── visualization.py
-│   ├── attention_viz.py
-│   └── hyperparameter_experiments.py
+├── data/raw/pg_catalog.csv            ← Gutenberg catalog
+│
+├── src/                               ← all models & pipelines
+│   ├── multilabel_data.py
+│   ├── conv1d_model.py · lstm_model.py
+│   ├── bert_classifier.py
+│   ├── text_generation.py
+│   └── …
 │
 ├── scripts/
-│   ├── run_pipeline.py       # Train + evaluate everything
-│   ├── build_notebook.py     # Regenerate notebook from markdown
-│   ├── setup_github.sh       # Create repo + push
-│   └── push_step.sh          # Push latest commit
+│   ├── run_pipeline.py                ← original single-label pipeline
+│   ├── run_step3_bert.py
+│   └── build_notebook.py
 │
-├── outputs/
-│   ├── figures/              # EDA plots, training curves, attention map
-│   └── metrics/              # JSON evaluation results
-│
-└── models/                   # Saved Keras weights (generated locally)
+└── outputs/figures/ · outputs/metrics/
 ```
 
 ---
 
-## Quick Start
+## Quick start
 
 ```bash
-cd "Assignment -3"
+git clone https://github.com/jayed5668/nlp-gutenberg-transformers.git
+cd nlp-gutenberg-transformers
 
-# 1. Virtual environment
 python3 -m venv .venv
 source .venv/bin/activate
-
-# 2. Dependencies
 pip install -r requirements.txt
 python -c "import nltk; nltk.download('stopwords')"
 
-# 3. Train models and save outputs
-python scripts/run_pipeline.py
-
-# 4. Regenerate notebook (optional)
+# Regenerate notebook (optional)
 python scripts/build_notebook.py
 
-# 5. Open notebook
+# Train classical models (Step 2)
+python -c "from src.multilabel_train import prepare_multilabel_tensors, train_conv1d, train_lstm; s,m=prepare_multilabel_tensors(); train_conv1d(s,m); train_lstm(s,m)"
+
+# DistilBERT (Step 3 — needs internet, ~2–5 min)
+python scripts/run_step3_bert.py
+
+# Open notebook
 jupyter notebook notebooks/assignment3_nlp_transformers.ipynb
 ```
 
 ---
 
-## Step-by-Step Workflow
+## How I developed this (step commits)
 
-I organised development into numbered Git commits (see [STEPS.md](STEPS.md)):
+I committed each assignment part separately so progress is visible on GitHub:
 
-| Step | Topic |
-|------|--------|
-| 01 | Project setup & dataset overview |
-| 02 | Exploratory data analysis |
-| 03 | Text cleaning & tokenization |
-| 04 | Train / validation / test split |
-| 05 | Baseline neural network |
-| 06 | Transformer architecture |
-| 07 | Training pipeline |
-| 08 | Evaluation & predictions |
-| 09 | Analysis support |
-| 10 | Notebook & report |
-| 11+ | Attention viz, hyperparameters, polished docs |
+| Commit | Content |
+|--------|---------|
+| `step-01` … `step-10` | Project setup, EDA, baseline Transformer, evaluation |
+| `step-11+` | Attention maps, hyperparameters, documentation |
+| `step-14` | Multi-label data + Conv1D + LSTM |
+| `step-15` | DistilBERT + text generation |
+| `step-16` | Polished README & notebook |
+
+Push after each step:
+
+```bash
+git add .
+git commit -m "step-XX: description"
+git push origin main
+```
 
 ---
 
 ## Documentation
 
-| File | Purpose |
-|------|---------|
-| [notebooks/assignment3_nlp_transformers.ipynb](notebooks/assignment3_nlp_transformers.ipynb) | Executable notebook with first-person explanations |
-| [docs/PROJECT_REPORT.md](docs/PROJECT_REPORT.md) | Complete report matching the assignment section outline |
-| [STEPS.md](STEPS.md) | Development checklist and Git commit map |
-
----
-
-## GitHub Setup
-
-**Repository name:** `nlp-gutenberg-transformers`
-
-```bash
-gh auth login          # one-time
-./scripts/setup_github.sh
-```
-
-After pushing: `https://github.com/jayed5668/nlp-gutenberg-transformers`
-
-To push a new step:
-
-```bash
-git add .
-git commit -m "step-XX: description"
-./scripts/push_step.sh
-```
+| Document | Description |
+|----------|-------------|
+| [Notebook](notebooks/assignment3_nlp_transformers.ipynb) | Runnable story of Steps 1–4 with my explanations |
+| [PROJECT_REPORT.md](docs/PROJECT_REPORT.md) | Long-form report (sections 1–26) |
+| [STEPS.md](STEPS.md) | Developer checklist |
 
 ---
 
 ## Dataset
 
-| Property | Value |
-|----------|--------|
-| **Source** | [Project Gutenberg Catalog](https://www.gutenberg.org/) |
-| **File** | `data/raw/pg_catalog.csv` |
-| **Rows** | 77,070 |
-| **Task** | Multi-class classification (12 top English text categories) |
-| **Input** | `Title` + `Authors` + `Subjects` |
-| **Target** | First tag in `Bookshelves` |
+| Field | Value |
+|-------|--------|
+| Source | [gutenberg.org](https://www.gutenberg.org/) |
+| File | `data/raw/pg_catalog.csv` (77,070 rows) |
+| Input | `Title` + `Authors` + `Subjects` |
+| Labels | Multi-hot bookshelf `Category:` tags (12 classes in my subset) |
 
 ---
 
 ## References
 
-1. Vaswani, A. et al. (2017). *Attention Is All You Need.*
-2. Project Gutenberg — https://www.gutenberg.org/
-3. TensorFlow — https://www.tensorflow.org/
-4. Hugging Face Transformers — https://huggingface.co/docs/transformers
+1. A. Vaswani et al., “Attention is all you need,” *NeurIPS*, 2017. https://arxiv.org/abs/1706.03762  
+2. V. Sanh et al., “DistilBERT,” *arXiv:1910.01108*, 2019. https://arxiv.org/abs/1910.01108  
+3. F. Chollet, *Deep Learning with Python*, Manning, 2021.  
+4. Inholland, *Minor Deep Learning — Assignment 3*, 2026.
 
 ---
 
-<p align="center">
-  <sub>Assignment 3 · Deep Learning Minor · Inholland</sub>
-</p>
+<p align="center"><sub>© My Deep Learning Minor submission — please cite Gutenberg data if you reuse this work.</sub></p>

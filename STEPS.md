@@ -1,27 +1,23 @@
-# Assignment 3 — Step-by-Step Progress
+# Assignment 3 — Progress (~100% of core brief)
 
-**GitHub repository:** `nlp-gutenberg-transformers`
+**Repo:** https://github.com/jayed5668/nlp-gutenberg-transformers
 
-| Step | Section | Status | Commit message |
-|------|---------|--------|----------------|
-| 1 | 1–3 Project overview + dataset | ✅ Done | `step-01-project-setup` |
-| 2 | 4 Exploratory Data Analysis | ✅ Done | `step-02-eda` |
-| 3 | 5–7 Preprocessing & tokenization | ✅ Done | `step-03-preprocessing` |
-| 4 | 8 Train/val/test split | ✅ Done | `step-04-data-split` |
-| 5 | 9 Baseline neural network | ✅ Done | `step-05-baseline-model` |
-| 6 | 10–11 Transformer architecture | ✅ Done | `step-06-transformer` |
-| 7 | 12 Model training | ✅ Done | `step-07-training` |
-| 8 | 13–14 Evaluation & predictions | ✅ Done | `step-08-evaluation` |
-| 9 | 15–18 Analysis support | ✅ Done | `step-09-analysis` |
-| 10 | Notebook + report | ✅ Done | `step-10-notebook-report` |
-| 11 | 15 Attention visualization | ✅ Done | `step-11-attention-viz` |
-| 12 | 16 Hyperparameter experiments | ✅ Done | `step-12-hyperparameters` |
-| 13 | Polished README + first-person docs | ✅ Done | `step-13-polished-documentation` |
+| Step | Assignment requirement | Status |
+|------|------------------------|--------|
+| 1 | Data preparation + embeddings | ✅ |
+| 2 | Conv1D + LSTM multi-label classification | ✅ |
+| 3 | DistilBERT pretrained Transformer | ✅ |
+| 4 | Text generation by category | ✅ |
+| — | Polished notebook + README | ✅ |
 
-## Push to GitHub
+## Git commits
+
+| Commit | Description |
+|--------|-------------|
+| step-14 | Multi-label dataset, Conv1D, LSTM |
+| step-15 | DistilBERT + text generation + metrics |
+| step-16 | Notebook & README polish |
 
 ```bash
-gh auth login
-cd "/Users/naimurrahmanjayed/Downloads/1. Inholland/Year-3/Minor -- Deep Learning/Assignment/Assignment -3"
-./scripts/setup_github.sh
+git push origin main
 ```
