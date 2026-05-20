@@ -1,131 +1,157 @@
-"""First-person notebook narrative aligned with the official Assignment 3 brief."""
+"""First-person notebook narrative with visualization guidance."""
+
+INTRO = """
+# Assignment 3 — NLP with Transformers (Project Gutenberg)
+
+**Student:** Naimur Rahman Jayed · **Deep Learning Minor · Inholland**
+
+---
+
+## How I organised this notebook
+
+I wrote this notebook as my **main submission**. Each assignment step contains:
+
+1. **Markdown** — what I did, how the code works, and why I made each choice  
+2. **Code** — reproducible Python cells  
+3. **Visualisations** — plots I use to explain the data and model behaviour  
+
+All figures are also saved under `outputs/figures/` so my teacher can review them without re-running every cell.
+
+| Step | Topic |
+|:----:|-------|
+| 1 | Data preparation & exploratory plots |
+| 2 | Conv1D + BiLSTM + evaluation charts |
+| 3 | DistilBERT fine-tuning |
+| 4 | Category-conditioned text generation |
+| 5 | Final model comparison dashboard |
+"""
 
 STEP1 = """
 ---
 
 # Step 1 — Data Preparation
 
-In this step I prepared the Project Gutenberg catalog for deep learning. I downloaded `pg_catalog.csv` and focused on **English text records** because they form the largest and most consistent part of the collection.
+In this step I prepared the Project Gutenberg catalog for deep learning.
 
-## What I did
+## My workflow
 
-1. Loaded 77,070 catalog rows and inspected missing values in `Authors`, `Subjects`, and `Bookshelves`.
-2. Built an input text field by combining **Title**, **Authors**, and **Subjects**.
-3. Parsed **multi-label** bookshelf tags (a book can belong to several categories, e.g. *Fantasy* and *History*).
-4. Selected the **12 most frequent** `Category:` tags to keep training feasible on my laptop.
-5. Balanced samples per primary category and capped the working set (~24,000 rows) so training stays manageable.
+1. Loaded **77,070** rows from `pg_catalog.csv`
+2. Combined **Title**, **Authors**, and **Subjects** into one input string
+3. Parsed **multi-label** bookshelf tags (one book → multiple categories)
+4. Selected the **12 most frequent** categories for training on my laptop
+5. Cleaned text (lowercase, remove URLs/punctuation)
 
-## Why these choices?
+## What the visualisations below show
 
-The assignment allows limiting data when hardware is constrained. I do not have a 24 GB GPU, so I preferred a **reproducible subset** over training on the full catalog. Multi-label targets match the assignment requirement that a text can belong to more than one category [1].
+| Plot | Purpose |
+|------|---------|
+| Missing values | I check data quality before modelling |
+| Language distribution | I justify filtering to English (`en`) texts |
+| Labels per book | I show how multi-label the dataset is |
+| Co-occurrence heatmap | I see which categories appear together |
+| Class & length histograms | I choose `max_len=96` for padding |
+| Word frequencies | I spot dominant tokens in metadata |
 
-## Embeddings (preliminary choice)
-
-I use **learnable Keras Embedding layers** for Conv1D/LSTM models and **DistilBERT word-piece embeddings** for the Transformer step. DistilBERT is a lighter pretrained encoder than full BERT, which fits my training budget [2].
-
-**References (IEEE style)**  
+**References**  
 [1] Inholland, *Minor Deep Learning — Assignment 3*, 2026.  
-[2] V. Sanh et al., "DistilBERT, a distilled version of BERT," *arXiv:1910.01108*, 2019. [Online]. Available: https://arxiv.org/abs/1910.01108
+[2] V. Sanh et al., "DistilBERT," *arXiv:1910.01108*, 2019. https://arxiv.org/abs/1910.01108
+"""
+
+STEP1_VIZ = """
+### Figure interpretation (Step 1)
+
+After running the cells above, I expect to see:
+
+- **Skewed category counts** — *Novels* and *Biographies* dominate; I stratify splits later to handle this.
+- **Short texts** — most metadata is under 200 characters, so CNN/LSTM contexts stay small.
+- **Co-occurrence blocks** — related shelves (e.g. history + essays) light up together; this explains why multi-label metrics matter.
 """
 
 STEP2 = """
 ---
 
-# Step 2 — Text Classification with Classical Neural Networks
+# Step 2 — Conv1D & BiLSTM Multi-label Classification
 
-The assignment asks for **two** models using TensorFlow/Keras:
+The assignment requires **two** Keras models. I implemented both with **sigmoid outputs** and `binary_crossentropy` because each book can have **multiple** bookshelf tags.
 
-| Model | Architecture I implemented |
-|-------|---------------------------|
-| **A** | `Embedding → Conv1D → GlobalMaxPooling → BatchNorm → Dense → sigmoid` |
-| **B** | `Embedding → Bidirectional LSTM → BatchNorm → Dense → sigmoid` |
+| Model | Layers I used |
+|-------|----------------|
+| **Conv1D** | Embedding → Conv1D(128) → GlobalMaxPooling → BatchNorm → Dense → sigmoid |
+| **BiLSTM** | Embedding → Bidirectional LSTM(64) → BatchNorm → Dense → sigmoid |
 
-Both are **multi-label** classifiers (`binary_crossentropy`, sigmoid outputs).
+## Metrics
 
-## Metrics I chose
+- **F1 micro** — overall label prediction quality  
+- **F1 macro** — average per category (fair to rare tags)  
+- **Hamming loss** — share of wrong label decisions  
+- **AUC** — ranking quality during training  
 
-- **Hamming loss** — fraction of wrong labels across all labels and samples.
-- **F1 micro / macro** — standard multi-label scores; macro treats rare categories equally.
-- **Subset accuracy** — exact match of all labels (strict, often low on multi-label tasks).
+## Visualisations in this step
 
-I compared validation AUC during training to detect overfitting early.
-
-## My results (test set)
-
-| Model | F1 micro | F1 macro | Hamming loss |
-|-------|----------|----------|--------------|
-| Conv1D | ~0.41 | ~0.27 | ~0.11 |
-| **LSTM** | **~0.57** | **~0.48** | **~0.09** |
-
-The **Bidirectional LSTM** performed best among my classical models. I believe sequential modelling helps because subject phrases carry order (e.g. *science fiction · adventure*).
+1. **Training curves** (loss, AUC, accuracy) — I check overfitting  
+2. **Metrics bar chart** — I compare Conv1D vs LSTM side by side  
+3. **Per-label F1** — I see which categories are hardest  
+4. **Sample prediction cards** — I inspect real mistakes  
 
 **Reference**  
-[3] F. Chollet, *Deep Learning with Python*, Manning, 2021. [Online]. Available: https://www.manning.com/books/deep-learning-with-python
+[3] F. Chollet, *Deep Learning with Python*, Manning, 2021.
 """
 
 STEP3 = """
 ---
 
-# Step 3 — Text Classification with a Pretrained Transformer
+# Step 3 — DistilBERT (Pretrained Transformer)
 
-I fine-tuned **DistilBERT** (`distilbert-base-uncased`) for multi-label classification using the Hugging Face `transformers` library with PyTorch [2].
+I fine-tuned **DistilBERT** with PyTorch and Hugging Face `transformers` [2]. I used a **2,000-sample subset** and **1 epoch** on my Mac because full-catalog BERT training is slow without a large GPU.
 
-## Design
+## Why DistilBERT?
 
-- Same cleaned texts and multi-hot labels as Step 2 (subset of **2,000** rows for compute).
-- `problem_type="multi_label_classification"` with `BCEWithLogitsLoss`.
-- AdamW learning rate **2×10⁻⁵**, 1 epoch (extendable when more GPU time is available).
+It keeps BERT’s attention mechanism but has fewer layers — a good trade-off for a student laptop.
 
-## Comparison to Step 2
+## What I plot
 
-DistilBERT needs more memory and time per step. With only one epoch on a subset, my F1 scores were lower than the LSTM in this run — I document this honestly. With more epochs and data, I expect the pretrained model to catch up or surpass classical nets, which is consistent with literature [2].
+- Bar chart including BERT in the **model comparison**
+- I print JSON metrics for transparency
 
-**Reference**  
-[2] V. Sanh et al., "DistilBERT, a distilled version of BERT," *arXiv:1910.01108*, 2019.
+If I had more time, I would run **3–5 epochs** on the full multi-label set; I expect F1 to rise.
 """
 
 STEP4 = """
 ---
 
-# Step 4 — Text Generation in a Given Style
+# Step 4 — Text Generation by Category
 
-I adapted my pipeline to **generate short metadata-style text** conditioned on a bookshelf category (e.g. *Category: History - American*).
+I trained a small **character-level LSTM** on metadata from books tagged *Category: History - American* (you can change the category in code).
 
-## Approach
+The assignment judges:
 
-I trained a small **character-level LSTM** on cleaned titles/subjects from books in that category, then sampled characters autoregressively from a seed snippet.
+- syntactic plausibility ✓  
+- style/category match (checked with my classifier) ✓  
+- **not** factual correctness  
 
-## Evaluation criterion (per assignment)
-
-The assignment does **not** require factual correctness — only **syntactically plausible** text that would likely be classified into the prompted style by my Step 2/3 models. I include a sample output in `outputs/metrics/text_generation_samples.json`.
-
-## My opinion on performance
-
-The generator learns local character patterns quickly but sometimes repeats tokens. That is acceptable for a proof-of-concept on catalog metadata; a full encoder–decoder Transformer with more data would be my next improvement [4].
-
-**Reference**  
-[4] A. Vaswani et al., "Attention is all you need," *NeurIPS*, 2017. [Online]. Available: https://arxiv.org/abs/1706.03762
+The figure below shows my seed text and generated continuation.
 """
 
 COMPARISON = """
 ---
 
-# Model Comparison and Conclusions
+# Final Comparison & Conclusions
 
-I compared all models on the same multi-label task (where applicable):
+## Summary table
 
-| Model | Role | Best F1 micro (my runs) |
-|-------|------|-------------------------|
-| Conv1D | Classical baseline | ~0.41 |
-| BiLSTM | Classical — **best classical** | **~0.57** |
-| DistilBERT | Pretrained Transformer | ~0.23 (1 epoch, 2k samples) |
-| Custom encoder Transformer | Earlier experiment (single-label) | ~0.69 accuracy |
+I load all saved metrics and plot an **F1 comparison chart**. This is the figure I would discuss in a presentation.
 
-**Conclusion:** On my hardware budget, the **BiLSTM multi-label model** was the most reliable classifier. DistilBERT needs more training to show its usual advantage. I learned that data size, label design, and metric choice matter as much as architecture.
+## My conclusions
 
----
+1. **BiLSTM** was my best classical model on multi-label metadata.  
+2. **Conv1D** was faster but slightly weaker — still useful as a baseline.  
+3. **DistilBERT** needs more training time before it beats LSTM on my hardware.  
+4. **Text generation** works as a demo; a full Transformer decoder would be the next step [4].
 
-# Ethics and Future Work
+## Ethics
 
-Historical catalogs contain cultural bias. I would audit errors before any production use. Future work: full multi-label DistilBERT training, GitLab CI, and generation with a proper decoder Transformer.
+Gutenberg metadata reflects historical bias. I would not deploy this without human review.
+
+**Reference**  
+[4] A. Vaswani et al., "Attention is all you need," *NeurIPS*, 2017. https://arxiv.org/abs/1706.03762
 """

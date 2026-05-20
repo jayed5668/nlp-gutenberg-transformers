@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Build the main Assignment 3 notebook with first-person documentation."""
+"""Build notebook with rich markdown + visualisations."""
 import json
 import sys
 from pathlib import Path
@@ -7,7 +7,15 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT))
 
-from docs.assignment_steps_markdown import COMPARISON, STEP1, STEP2, STEP3, STEP4  # noqa: E402
+from docs.assignment_steps_markdown import (  # noqa: E402
+    COMPARISON,
+    INTRO,
+    STEP1,
+    STEP1_VIZ,
+    STEP2,
+    STEP3,
+    STEP4,
+)
 
 NOTEBOOK_PATH = ROOT / "notebooks" / "assignment3_nlp_transformers.ipynb"
 
@@ -26,33 +34,11 @@ def code(text: str) -> dict:
     }
 
 
-INTRO = """
-# Assignment 3 — NLP with Transformers (Project Gutenberg)
-
-**Student:** Naimur Rahman Jayed · **Course:** Deep Learning Minor · **Institution:** Inholland
-
----
-
-## How to read this notebook
-
-I structured this notebook exactly like the assignment brief:
-
-| Step | Topic |
-|------|--------|
-| **1** | Data preparation & embeddings |
-| **2** | Conv1D and LSTM multi-label classification |
-| **3** | DistilBERT (pretrained Transformer) classification |
-| **4** | Category-conditioned text generation |
-
-Each step has **markdown explanations** (what / how / why) and **code cells** you can run in order. Figures and metrics are saved under `outputs/`.
-"""
-
-
 def build():
     cells = [
         md(INTRO),
         code(
-            """# Environment setup
+            """# Setup
 import sys
 from pathlib import Path
 ROOT = Path.cwd().resolve()
@@ -69,82 +55,164 @@ import numpy as np
 import pandas as pd
 import seaborn as sns
 
+from IPython.display import display, Image, Markdown
+
 %matplotlib inline
-sns.set_theme(style="whitegrid")
-print("Project root:", ROOT)"""
+plt.rcParams["figure.figsize"] = (10, 4)
+plt.rcParams["font.size"] = 11
+sns.set_theme(style="whitegrid", palette="muted")
+print("Ready — project root:", ROOT)"""
         ),
         md(STEP1),
         code(
             """from src.data_loading import load_raw_catalog
 from src.multilabel_data import prepare_multilabel_dataset
 from src.preprocessing import preprocess_dataframe
-from src.visualization import plot_class_distribution, plot_text_length_distribution
+from src.visualization import (
+    plot_missing_values,
+    plot_language_distribution,
+    plot_labels_per_book,
+    plot_multilabel_cooccurrence,
+    plot_class_distribution,
+    plot_text_length_distribution,
+    plot_word_frequency,
+)
 
 raw_df = load_raw_catalog()
-print("Full catalog shape:", raw_df.shape)
-display(raw_df.head())
-
+print("Shape:", raw_df.shape)
+display(raw_df.head())"""
+        ),
+        code(
+            """# Visualisation 1 — missing values in raw catalog
+plot_missing_values(raw_df)"""
+        ),
+        code(
+            """# Visualisation 2 — languages in full catalog
+plot_language_distribution(raw_df)"""
+        ),
+        code(
+            """# Prepare my working multi-label subset
 df, class_names = prepare_multilabel_dataset(raw_df)
 df = preprocess_dataframe(df, text_col="text")
 df["num_labels"] = df["label_list"].apply(len)
-print("Working set:", df.shape)
-print("Label categories:", len(class_names))
-display(df[["Title", "label_list", "text_clean", "num_labels"]].head())
-
-# Primary tag for EDA plot
 df["category"] = df["label_list"].str[0]
-plot_class_distribution(df)
-plot_text_length_distribution(df, col="text")"""
+print("Working set:", df.shape, "| categories:", len(class_names))
+display(df[["Title", "label_list", "num_labels", "text_clean"]].head(8))"""
         ),
+        code(
+            """# Visualisation 3 — multi-label intensity
+plot_labels_per_book(df)"""
+        ),
+        code(
+            """# Visualisation 4 — which categories co-occur?
+plot_multilabel_cooccurrence(df["label_list"].tolist(), class_names)"""
+        ),
+        code(
+            """# Visualisation 5–7 — class balance, text length, vocabulary
+plot_class_distribution(df)
+plot_text_length_distribution(df, col="text")
+tokens = []
+for t in df["text_clean"].head(4000):
+    tokens.extend(t.split())
+plot_word_frequency(tokens, top_n=20)"""
+        ),
+        md(STEP1_VIZ),
         md(STEP2),
         code(
             """from src.multilabel_train import prepare_multilabel_tensors, train_conv1d, train_lstm
-import pandas as pd
+from src.multilabel_eval import predict_multilabel
+from src.visualization import (
+    plot_training_history_multilabel,
+    plot_multilabel_metrics_bar,
+    plot_per_label_f1,
+    plot_sample_predictions,
+)
 
 splits, vectorizer, meta = prepare_multilabel_tensors(df)
+X_train, X_val, X_test, y_train, y_val, y_test = splits
+texts_test = meta["texts_test"]
+print("Test samples:", len(X_test))"""
+        ),
+        code(
+            """# Train Conv1D — I watch validation AUC in the next plot
 conv_model, conv_hist, conv_res = train_conv1d(splits, meta, epochs=4)
+plot_training_history_multilabel(conv_hist, "conv1d")"""
+        ),
+        code(
+            """# Train BiLSTM
 lstm_model, lstm_hist, lstm_res = train_lstm(splits, meta, epochs=4)
+plot_training_history_multilabel(lstm_hist, "lstm")"""
+        ),
+        code(
+            """# Visualisation — compare test metrics
+plot_multilabel_metrics_bar([conv_res, lstm_res])
 
-rows = []
-for name, res in [("Conv1D", conv_res), ("BiLSTM", lstm_res)]:
-    m = res["test_metrics"]
-    rows.append({"Model": name, **m, "train_sec": res["train_time_sec"]})
-display(pd.DataFrame(rows))"""
+conv_pred, conv_prob = predict_multilabel(conv_model, X_test)
+lstm_pred, lstm_prob = predict_multilabel(lstm_model, X_test)
+plot_per_label_f1(y_test, lstm_pred, class_names, name="lstm_per_label_f1.png")
+plot_sample_predictions(texts_test, y_test, lstm_prob, class_names, n=4)"""
+        ),
+        code(
+            """# Table for my report
+pd.DataFrame([
+    {"Model": "Conv1D", **conv_res["test_metrics"], "sec": conv_res["train_time_sec"]},
+    {"Model": "BiLSTM", **lstm_res["test_metrics"], "sec": lstm_res["train_time_sec"]},
+])"""
         ),
         md(STEP3),
         code(
-            """# DistilBERT — downloads weights on first run (~250 MB). Allow a few minutes.
-from src.bert_classifier import train_bert
+            """# Optional: skip if offline — needs HuggingFace download (~250 MB)
+RUN_BERT = True  # set False to load saved metrics only
 
-# Set epochs=2 in src/config.py for stronger results if you have time
-bert_model, bert_tok, bert_res = train_bert()
-print(json.dumps(bert_res["test_metrics"], indent=2))"""
+if RUN_BERT:
+    from src.bert_classifier import train_bert
+    bert_model, bert_tok, bert_res = train_bert()
+else:
+    bert_res = json.loads((ROOT / "outputs/metrics/bert_multilabel.json").read_text())
+
+display(pd.Series(bert_res["test_metrics"]))"""
+        ),
+        code(
+            """# Add BERT to comparison chart
+all_results = [conv_res, lstm_res, bert_res]
+plot_multilabel_metrics_bar(all_results)"""
         ),
         md(STEP4),
         code(
             """from src.text_generation import train_and_generate
+from src.visualization import plot_generated_text_card
 
 gen_model, gen_result = train_and_generate(category="Category: History - American")
-print("Prompt category:", gen_result["prompt_category"])
-print("Seed:", gen_result["seed"])
-print("\\n--- Generated text ---\\n")
+plot_generated_text_card(
+    gen_result["seed"],
+    gen_result["generated_text"],
+    gen_result["prompt_category"],
+)
 print(gen_result["generated_text"])"""
         ),
         md(COMPARISON),
         code(
-            """# Load saved metrics for final comparison table
-from pathlib import Path
-import pandas as pd
+            """# Final dashboard — all saved metrics
+from src.visualization import plot_multilabel_metrics_bar
 
 metrics_dir = ROOT / "outputs" / "metrics"
-rows = []
+loaded = []
 for path in sorted(metrics_dir.glob("*multilabel.json")):
     data = json.loads(path.read_text())
-    row = {"file": path.name, "model": data.get("model"), "train_sec": data.get("train_time_sec")}
     if "test_metrics" in data:
-        row.update(data["test_metrics"])
-    rows.append(row)
-display(pd.DataFrame(rows))"""
+        loaded.append(data)
+display(pd.DataFrame([
+    {"model": d["model"], **d["test_metrics"], "train_sec": d.get("train_time_sec")}
+    for d in loaded
+]))
+if loaded:
+    plot_multilabel_metrics_bar(loaded)
+
+# Show saved figures gallery
+fig_dir = ROOT / "outputs" / "figures"
+for img in sorted(fig_dir.glob("*.png")):
+    display(Markdown(f"**{img.name}**"))
+    display(Image(filename=str(img), width=700))"""
         ),
     ]
 
@@ -157,10 +225,9 @@ display(pd.DataFrame(rows))"""
         },
         "cells": cells,
     }
-    NOTEBOOK_PATH.parent.mkdir(parents=True, exist_ok=True)
     with open(NOTEBOOK_PATH, "w") as f:
         json.dump(nb, f, indent=1)
-    print(f"Wrote {NOTEBOOK_PATH}")
+    print(f"Wrote {NOTEBOOK_PATH} ({len(cells)} cells)")
 
 
 if __name__ == "__main__":

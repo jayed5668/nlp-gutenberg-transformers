@@ -59,6 +59,8 @@ Multi-label classification on a balanced subset of English Gutenberg metadata:
 
 On my laptop, the **BiLSTM** was the strongest classical model. DistilBERT needs more epochs/data to show its usual advantage — I document that limitation in the notebook.
 
+**Notebook visualisations:** missing values, language mix, label co-occurrence, training curves, per-category F1, sample predictions, model comparison bars, and text-generation card — all inline in the notebook and saved under `outputs/figures/`.
+
 Figures: `outputs/figures/` · Metrics: `outputs/metrics/`
 
 ---

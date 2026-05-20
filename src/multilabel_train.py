@@ -24,32 +24,43 @@ from .multilabel_data import labels_to_multihot, prepare_multilabel_dataset
 from .preprocessing import TextVectorizer, preprocess_dataframe
 
 
-def _split_multilabel(X, y):
-    X_train, X_temp, y_train, y_temp = train_test_split(
-        X, y, test_size=TEST_SIZE + VAL_SIZE, random_state=RANDOM_SEED
+def _split_multilabel(X, y, texts=None):
+    if texts is None:
+        X_train, X_temp, y_train, y_temp = train_test_split(
+            X, y, test_size=TEST_SIZE + VAL_SIZE, random_state=RANDOM_SEED
+        )
+        relative_val = VAL_SIZE / (TEST_SIZE + VAL_SIZE)
+        X_val, X_test, y_val, y_test = train_test_split(
+            X_temp, y_temp, test_size=1 - relative_val, random_state=RANDOM_SEED
+        )
+        return X_train, X_val, X_test, y_train, y_val, y_test, None, None, None
+
+    X_train, X_temp, y_train, y_temp, t_train, t_temp = train_test_split(
+        X, y, texts, test_size=TEST_SIZE + VAL_SIZE, random_state=RANDOM_SEED
     )
     relative_val = VAL_SIZE / (TEST_SIZE + VAL_SIZE)
-    X_val, X_test, y_val, y_test = train_test_split(
-        X_temp, y_temp, test_size=1 - relative_val, random_state=RANDOM_SEED
+    X_val, X_test, y_val, y_test, t_val, t_test = train_test_split(
+        X_temp, y_temp, t_temp, test_size=1 - relative_val, random_state=RANDOM_SEED
     )
-    return X_train, X_val, X_test, y_train, y_val, y_test
+    return X_train, X_val, X_test, y_train, y_val, y_test, t_train, t_val, t_test
 
 
 def prepare_multilabel_tensors(df=None):
     df, class_names = prepare_multilabel_dataset(df)
     df = preprocess_dataframe(df, text_col="text")
     vectorizer = TextVectorizer(max_vocab=VOCAB_SIZE, max_len=MAX_SEQUENCE_LENGTH)
-    # Fit vocabulary on text only
-    vectorizer.fit(df["text_clean"].tolist(), df["label_list"].str[0].tolist())
-    X = vectorizer.encode_texts(df["text_clean"].tolist())
+    texts = df["text_clean"].tolist()
+    vectorizer.fit(texts, df["label_list"].str[0].tolist())
+    X = vectorizer.encode_texts(texts)
     y = labels_to_multihot(df["label_list"].tolist(), class_names)
-    splits = _split_multilabel(X, y)
+    splits = _split_multilabel(X, y, texts)
     meta = {
         "vocab_size": len(vectorizer.word_index),
         "num_classes": len(class_names),
         "class_names": class_names,
+        "texts_test": splits[8],
     }
-    return splits, vectorizer, meta
+    return splits[:6], vectorizer, meta
 
 
 def _evaluate_multilabel(model, X_test, y_test, threshold=0.5) -> dict:

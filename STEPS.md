@@ -9,6 +9,7 @@
 | 3 | DistilBERT pretrained Transformer | ✅ |
 | 4 | Text generation by category | ✅ |
 | — | Polished notebook + README | ✅ |
+| 17 | Extra visualisations + notebook explanations | ✅ |
 
 ## Git commits
 
