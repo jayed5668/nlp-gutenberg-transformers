@@ -54,6 +54,37 @@ Assignment -3/
 └── models/
 ```
 
+## GitHub Repository
+
+**Repository name:** `nlp-gutenberg-transformers`
+
+All work is committed in **10 step commits** on `main` (see `STEPS.md`).
+
+### First-time setup (one-time login)
+
+```bash
+gh auth login
+# Choose: GitHub.com → HTTPS → Login with browser
+```
+
+### Create repo and push all steps
+
+```bash
+cd "Assignment -3"
+./scripts/setup_github.sh
+```
+
+After authentication, your repo will be:
+`https://github.com/jayed5668/nlp-gutenberg-transformers`
+
+### Push after a new step
+
+```bash
+git add .
+git commit -m "step-XX: description"
+./scripts/push_step.sh
+```
+
 ## Reproducibility
 
 ```bash
