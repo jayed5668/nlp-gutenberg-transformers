@@ -1,0 +1,10 @@
+{
+  "model": "distilbert-base-uncased",
+  "train_time_sec": 87.2206780910492,
+  "test_metrics": {
+    "hamming_loss": 0.1288888888888889,
+    "f1_micro": 0.23432343234323433,
+    "f1_macro": 0.06099656357388316
+  },
+  "num_train_samples": 1400
+}
