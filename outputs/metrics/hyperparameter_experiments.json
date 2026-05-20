@@ -1,0 +1,34 @@
+[
+  {
+    "experiment": "lr_1e-2",
+    "learning_rate": 0.01,
+    "embed_dim": 64,
+    "val_accuracy": 0.6888889074325562,
+    "test_accuracy": 0.6686111092567444,
+    "train_time_sec": 3.3770949840545654
+  },
+  {
+    "experiment": "lr_1e-3",
+    "learning_rate": 0.001,
+    "embed_dim": 64,
+    "val_accuracy": 0.6980555653572083,
+    "test_accuracy": 0.7022222280502319,
+    "train_time_sec": 3.198817014694214
+  },
+  {
+    "experiment": "embed_32",
+    "learning_rate": 0.001,
+    "embed_dim": 32,
+    "val_accuracy": 0.6872222423553467,
+    "test_accuracy": 0.6858333349227905,
+    "train_time_sec": 2.4619600772857666
+  },
+  {
+    "experiment": "embed_128",
+    "learning_rate": 0.001,
+    "embed_dim": 128,
+    "val_accuracy": 0.7019444704055786,
+    "test_accuracy": 0.7008333206176758,
+    "train_time_sec": 6.216799020767212
+  }
+]

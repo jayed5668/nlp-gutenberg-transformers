@@ -4,6 +4,7 @@ import tensorflow as tf
 from tensorflow import keras
 
 
+@keras.utils.register_keras_serializable(package="src")
 class PositionalEncoding(keras.layers.Layer):
     def __init__(self, max_len: int, embed_dim: int, **kwargs):
         super().__init__(**kwargs)
