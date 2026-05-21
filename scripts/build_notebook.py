@@ -15,6 +15,9 @@ from docs.assignment_steps_markdown import (  # noqa: E402
     STEP2,
     STEP3,
     STEP4,
+    STEP18,
+    STEP19,
+    STEP20,
 )
 
 NOTEBOOK_PATH = ROOT / "notebooks" / "assignment3_nlp_transformers.ipynb"
@@ -150,7 +153,18 @@ plot_multilabel_metrics_bar([conv_res, lstm_res])
 conv_pred, conv_prob = predict_multilabel(conv_model, X_test)
 lstm_pred, lstm_prob = predict_multilabel(lstm_model, X_test)
 plot_per_label_f1(y_test, lstm_pred, class_names, name="lstm_per_label_f1.png")
-plot_sample_predictions(texts_test, y_test, lstm_prob, class_names, n=4)"""
+plot_sample_predictions(texts_test, y_test, lstm_prob, class_names, n=4)
+
+# Advanced error-analysis plots
+from src.visualization import (
+    plot_multilabel_truth_pred_heatmap,
+    plot_probability_heatmap,
+    plot_threshold_sweep,
+)
+plot_multilabel_truth_pred_heatmap(y_test, lstm_pred, class_names, n_samples=20)
+plot_probability_heatmap(lstm_prob, class_names, n_samples=20)
+plot_threshold_sweep(y_test, lstm_prob)
+plot_per_label_f1(y_test, conv_pred, class_names, name="conv1d_per_label_f1.png")"""
         ),
         code(
             """# Table for my report
@@ -158,6 +172,16 @@ pd.DataFrame([
     {"Model": "Conv1D", **conv_res["test_metrics"], "sec": conv_res["train_time_sec"]},
     {"Model": "BiLSTM", **lstm_res["test_metrics"], "sec": lstm_res["train_time_sec"]},
 ])"""
+        ),
+        md(STEP18),
+        md(STEP19),
+        code(
+            """from src.hyperparameter_experiments import run_multilabel_experiments
+from src.visualization import plot_hyperparameter_results
+
+hp_results = run_multilabel_experiments(epochs=3)
+display(pd.DataFrame([{"experiment": r["experiment"], **r["test_metrics"]} for r in hp_results]))
+plot_hyperparameter_results(hp_results)"""
         ),
         md(STEP3),
         code(
@@ -189,6 +213,20 @@ plot_generated_text_card(
     gen_result["prompt_category"],
 )
 print(gen_result["generated_text"])"""
+        ),
+        md(STEP20),
+        code(
+            """from src.generation_eval import generate_and_classify
+from src.visualization import plot_generation_comparison
+
+GEN_CATEGORIES = [
+    "Category: History - American",
+    "Category: Children & Young Adult Reading",
+    "Category: Poetry",
+]
+gen_eval = generate_and_classify(GEN_CATEGORIES, lstm_model, vectorizer, class_names)
+display(pd.DataFrame(gen_eval))
+plot_generation_comparison(gen_eval)"""
         ),
         md(COMPARISON),
         code(

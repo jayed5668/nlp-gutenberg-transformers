@@ -1,24 +1,12 @@
-# Assignment 3 — Progress (~100% of core brief)
+# Assignment 3 — Progress
 
-**Repo:** https://github.com/jayed5668/nlp-gutenberg-transformers
+**GitHub:** https://github.com/jayed5668/nlp-gutenberg-transformers  
+**GitLab:** you will push yourself later
 
-| Step | Assignment requirement | Status |
-|------|------------------------|--------|
-| 1 | Data preparation + embeddings | ✅ |
-| 2 | Conv1D + LSTM multi-label classification | ✅ |
-| 3 | DistilBERT pretrained Transformer | ✅ |
-| 4 | Text generation by category | ✅ |
-| — | Polished notebook + README | ✅ |
-| 17 | Extra visualisations + notebook explanations | ✅ |
-
-## Git commits
-
-| Commit | Description |
-|--------|-------------|
-| step-14 | Multi-label dataset, Conv1D, LSTM |
-| step-15 | DistilBERT + text generation + metrics |
-| step-16 | Notebook & README polish |
-
-```bash
-git push origin main
-```
+| Step | Topic | Status |
+|------|--------|--------|
+| 1–4 | Official assignment steps | ✅ |
+| 17 | EDA + model visualisations | ✅ |
+| 18 | Error analysis heatmaps + threshold sweep | ✅ |
+| 19 | Hyperparameter experiment plots | ✅ |
+| 20 | Multi-category generation + classifier check | ✅ |
