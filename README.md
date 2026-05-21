@@ -59,7 +59,7 @@ Multi-label classification on a balanced subset of English Gutenberg metadata:
 
 On my laptop, the **BiLSTM** was the strongest classical model. DistilBERT needs more epochs/data to show its usual advantage — I document that limitation in the notebook.
 
-**Notebook visualisations:** missing values, language mix, label co-occurrence, training curves, per-category F1, sample predictions, model comparison bars, and text-generation card — all inline in the notebook and saved under `outputs/figures/`.
+**Notebook visualisations:** missing values, language mix, label co-occurrence, training curves, per-category F1, sample predictions, model comparison bars, **truth vs predicted heatmaps**, **threshold sweep**, **hyperparameter comparison**, multi-category **generation + classifier check**, and text-generation cards — all inline in the notebook and saved under `outputs/figures/`.
 
 Figures: `outputs/figures/` · Metrics: `outputs/metrics/`
 
@@ -136,6 +136,9 @@ I committed each assignment part separately so progress is visible on GitHub:
 | `step-14` | Multi-label data + Conv1D + LSTM |
 | `step-15` | DistilBERT + text generation |
 | `step-16` | Polished README & notebook |
+| `step-17` | Rich EDA + training visualisations in notebook |
+| `step-18` | Error-analysis heatmaps, threshold sweep, generation eval |
+| `step-19` | Notebook Steps 5–7 (hyperparameters, multi-style generation) |
 
 Push after each step:
 
@@ -151,7 +154,7 @@ git push origin main
 
 | Document | Description |
 |----------|-------------|
-| [Notebook](notebooks/assignment3_nlp_transformers.ipynb) | Runnable story of Steps 1–4 with my explanations |
+| [Notebook](notebooks/assignment3_nlp_transformers.ipynb) | Runnable story of Steps 1–4 plus evaluation & generation analysis |
 | [PROJECT_REPORT.md](docs/PROJECT_REPORT.md) | Long-form report (sections 1–26) |
 | [STEPS.md](STEPS.md) | Developer checklist |
 

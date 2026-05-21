@@ -37,6 +37,7 @@ def plot_token_importance(
     OUTPUTS_FIGURES.mkdir(parents=True, exist_ok=True)
     path = OUTPUTS_FIGURES / filename
     fig.savefig(path, dpi=130, bbox_inches="tight")
+    plt.show()
     plt.close(fig)
     return path
 
