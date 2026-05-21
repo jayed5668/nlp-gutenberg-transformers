@@ -1,0 +1,16 @@
+[
+  {
+    "category": "Category: Poetry",
+    "seed": "chambers s journal of pop",
+    "generated_text": "chambers s journal of popan an an an an an an an an an an an an an an an an an an an an an an an an an an",
+    "classifier_labels": "(below threshold)",
+    "matches_prompt": false
+  },
+  {
+    "category": "Category: Adventure",
+    "seed": "the fire gods a tale of t",
+    "generated_text": "the fire gods a tale of the ore ore ore ore ore ore ore ore ore ore ore ore ore ore ore ore ore ore ore o",
+    "classifier_labels": "(below threshold)",
+    "matches_prompt": false
+  }
+]

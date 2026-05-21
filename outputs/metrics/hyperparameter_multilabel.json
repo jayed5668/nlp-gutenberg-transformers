@@ -1,0 +1,54 @@
+[
+  {
+    "experiment": "lr_1e-2",
+    "name": "lr_1e-2",
+    "learning_rate": 0.01,
+    "embed_dim": 64,
+    "train_time_sec": 2.4061031341552734,
+    "test_metrics": {
+      "hamming_loss": 0.12824074074074074,
+      "f1_micro": 0.5153105861767279,
+      "f1_macro": 0.3863889129704105,
+      "subset_accuracy": 0.17777777777777778
+    }
+  },
+  {
+    "experiment": "lr_1e-3",
+    "name": "lr_1e-3",
+    "learning_rate": 0.001,
+    "embed_dim": 64,
+    "train_time_sec": 2.757012128829956,
+    "test_metrics": {
+      "hamming_loss": 0.12534722222222222,
+      "f1_micro": 0.27655310621242485,
+      "f1_macro": 0.09481227224127842,
+      "subset_accuracy": 0.041666666666666664
+    }
+  },
+  {
+    "experiment": "embed_32",
+    "name": "embed_32",
+    "learning_rate": 0.001,
+    "embed_dim": 32,
+    "train_time_sec": 2.039263963699341,
+    "test_metrics": {
+      "hamming_loss": 0.14247685185185185,
+      "f1_micro": 0.04795050270688322,
+      "f1_macro": 0.024839743589743588,
+      "subset_accuracy": 0.02361111111111111
+    }
+  },
+  {
+    "experiment": "embed_128",
+    "name": "embed_128",
+    "learning_rate": 0.001,
+    "embed_dim": 128,
+    "train_time_sec": 4.844579696655273,
+    "test_metrics": {
+      "hamming_loss": 0.12939814814814815,
+      "f1_micro": 0.21927374301675978,
+      "f1_macro": 0.13069771479073594,
+      "subset_accuracy": 0.10138888888888889
+    }
+  }
+]

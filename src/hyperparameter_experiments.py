@@ -1,14 +1,11 @@
-"""Small hyperparameter grid for baseline model comparison."""
+"""Hyperparameter grid for Conv1D multi-label model."""
 import json
 import time
-from pathlib import Path
 
-import numpy as np
-from tensorflow import keras
-
-from .baseline_model import build_baseline_model, compile_model
-from .config import BATCH_SIZE, MAX_SEQUENCE_LENGTH, OUTPUTS_METRICS
-from .train import prepare_tensors
+from .config import BATCH_SIZE, EPOCHS_BASELINE, MAX_SEQUENCE_LENGTH, OUTPUTS_METRICS
+from .conv1d_model import build_conv1d_classifier
+from .multilabel_eval import multilabel_metrics, predict_multilabel
+from .multilabel_train import prepare_multilabel_tensors
 
 
 EXPERIMENTS = [
@@ -19,42 +16,43 @@ EXPERIMENTS = [
 ]
 
 
-def run_experiments(epochs: int = 4) -> list[dict]:
-    splits, vectorizer, meta = prepare_tensors()
+def run_multilabel_experiments(epochs: int = 3):
+    splits, _, meta = prepare_multilabel_tensors()
     X_train, X_val, X_test, y_train, y_val, y_test = splits
     results = []
 
     for exp in EXPERIMENTS:
-        model = build_baseline_model(
-            meta["vocab_size"],
-            meta["num_classes"],
-            MAX_SEQUENCE_LENGTH,
-            embed_dim=exp["embed_dim"],
+        model = build_conv1d_classifier(
+            meta["vocab_size"], meta["num_classes"], MAX_SEQUENCE_LENGTH, embed_dim=exp["embed_dim"]
         )
-        compile_model(model, learning_rate=exp["learning_rate"])
+        import tensorflow as tf
+        model.compile(
+            optimizer=tf.keras.optimizers.Adam(learning_rate=exp["learning_rate"]),
+            loss="binary_crossentropy",
+            metrics=["binary_accuracy"],
+        )
         start = time.time()
-        history = model.fit(
-            X_train,
-            y_train,
+        model.fit(
+            X_train, y_train,
             validation_data=(X_val, y_val),
-            epochs=epochs,
-            batch_size=BATCH_SIZE,
-            verbose=0,
+            epochs=epochs, batch_size=BATCH_SIZE, verbose=0,
         )
-        test_loss, test_acc = model.evaluate(X_test, y_test, verbose=0)
-        results.append(
-            {
-                "experiment": exp["name"],
-                "learning_rate": exp["learning_rate"],
-                "embed_dim": exp["embed_dim"],
-                "val_accuracy": float(max(history.history["val_accuracy"])),
-                "test_accuracy": float(test_acc),
-                "train_time_sec": time.time() - start,
-            }
-        )
+        pred, _ = predict_multilabel(model, X_test)
+        metrics = multilabel_metrics(y_test, pred)
+        results.append({
+            "experiment": exp["name"],
+            **exp,
+            "train_time_sec": time.time() - start,
+            "test_metrics": metrics,
+        })
 
     OUTPUTS_METRICS.mkdir(parents=True, exist_ok=True)
-    out_path = OUTPUTS_METRICS / "hyperparameter_experiments.json"
-    with open(out_path, "w") as f:
+    path = OUTPUTS_METRICS / "hyperparameter_multilabel.json"
+    with open(path, "w") as f:
         json.dump(results, f, indent=2)
     return results
+
+
+def run_experiments(epochs: int = 4):
+    """Backward-compatible alias."""
+    return run_multilabel_experiments(epochs)
